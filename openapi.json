@@ -2442,6 +2442,40 @@
         }
       }
     },
+    "/v2.0/targetTypes": {
+      "get": {
+        "tags": [
+          "Lists"
+        ],
+        "summary": "Gets a list of Target Types.",
+        "description": "This operation returns an instance of 'TargetType' type.\n\n",
+        "operationId": "GetTargetTypes",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/TargetType"
+              },
+              "xml": {
+                "name": "TargetType",
+                "wrapped": true
+              },
+              "type": "array"
+            }
+          },
+          "500": {
+            "description": "There was an unexpected error while handling the request."
+          }
+        }
+      }
+    },
     "/v2.0/publications": {
       "get": {
         "tags": [
@@ -3213,10 +3247,17 @@
           {
             "name": "forAllUsers",
             "in": "query",
-            "description": "If specified and true, items locked by any user are returned, but only in Publications where the user has Publication Administration or Lock Management Rights (unless the user has System Administration privileges).\r\nBy default, only items locked by the current user are returned.",
+            "description": "If specified and true, items locked by any user are returned, but only in Publications where the user has Publication Administration or Lock Management Rights (unless the user has System Administration privileges).\r\nBy default, only items locked by the current user are returned.\r\nThis parameter is ignored if {lockUserId} parameter is specified.",
             "required": false,
             "type": "boolean",
             "default": false
+          },
+          {
+            "name": "lockUserId",
+            "in": "query",
+            "description": "The TCM URI of the user who locked the items.\r\nIf specified, the {forAllUsers} parameter is irrelevant and ignored.",
+            "required": false,
+            "type": "string"
           },
           {
             "name": "lockFilter",
@@ -4058,6 +4099,52 @@
             "x-example": "1970-01-01T00:00:00Z",
             "type": "string",
             "format": "date-time"
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "description": "If specified, only include Publish Transactions with this priority.",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/PublishPriority"
+            },
+            "type": "string",
+            "enum": [
+              "Low",
+              "Normal",
+              "High"
+            ]
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "If specified, only include Publish Transactions with this state.",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/PublishTransactionState"
+            },
+            "type": "string",
+            "enum": [
+              "ScheduledForPublish",
+              "WaitingForPublish",
+              "InProgress",
+              "ScheduledForDeployment",
+              "WaitingForDeployment",
+              "Failed",
+              "Success",
+              "Warning",
+              "Resolving",
+              "Rendering",
+              "Throttled",
+              "ReadyForTransport",
+              "Transporting",
+              "Deploying",
+              "PreparingDeployment",
+              "PreCommittingDeployment",
+              "CommittingDeployment",
+              "WaitingForCdEnvironment",
+              "UnknownByClient"
+            ]
           }
         ],
         "responses": {
@@ -5772,10 +5859,24 @@
           {
             "name": "forAllUsers",
             "in": "query",
-            "description": "When forAllUsers is set to false (the default value), the results will be filtered on Assignee or Owner depending on the activity instance state:\r\nActivity Instances in Assigned State are returned if they are assigned to the Current User or any groups of the Current User.\r\nActivity Instances in other Activity States are returned if they are owned by the Current User\r\n<para>\r\nWhen forAllUsers is set to true, the results are filtered by security instead.\r\nOnly the Activity Instances on which the current user has Workflow Management rights (or system administration privileges) are returned.\r\n</para>",
+            "description": "When forAllUsers is set to false (the default value), the results will be filtered on Assignee or Owner depending on the activity instance state:\r\nActivity Instances in Assigned State are returned if they are assigned to the Current User or any groups of the Current User.\r\nActivity Instances in other Activity States are returned if they are owned by the Current User\r\n<para>\r\nWhen forAllUsers is set to true, the results are filtered by security instead.\r\nOnly the Activity Instances on which the current user has Workflow Management rights (or system administration privileges) are returned.\r\n</para><para>\r\nThe forAllUsers is ignored if either of {ownerId} or {assigneeId} parameters is specified.\r\n</para>",
             "required": false,
             "type": "boolean",
             "default": false
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "description": "The TCM URI of the owner.\r\nIf specified, only activity instances for the given owner are returned,\r\nand {forAllUsers} parameter is irrelevant and will be ignored.\r\nIf {assigneeId} is also specified then activity instances with given owner or assignee are returned.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "assigneeId",
+            "in": "query",
+            "description": "The TCM URI of the assignee user or group.\r\nIf specified, only activity instances assigned to the given assignee are returned,\r\nand {forAllUsers} parameter is irrelevant and will be ignored.\r\nIf {ownerId} is also specified then activity instances with given owner or assignee are returned.",
+            "required": false,
+            "type": "string"
           },
           {
             "name": "activityStates",
@@ -6656,7 +6757,11 @@
           "type": "string"
         },
         "ApiVersion": {
-          "description": "Gets the current version of the CoreService REST API.",
+          "description": "Gets the current version of the CoreService REST API (for example: \"2.0\")",
+          "type": "string"
+        },
+        "ProductVersion": {
+          "description": "Gets the Tridion Sites Product Version (for example: \"10.0.1\")",
           "type": "string"
         },
         "ServerTime": {
